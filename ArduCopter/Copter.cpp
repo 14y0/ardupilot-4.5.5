@@ -706,13 +706,14 @@ void Copter::update_simple_mode(void)
     float rollx, pitchx;
 
     // exit immediately if no new radio frame or not in simple mode
+    // 判断飞行器状态
     if (simple_mode == SimpleMode::NONE || !ap.new_radio_frame) {
         return;
     }
 
     // mark radio frame as consumed
     ap.new_radio_frame = false;
-
+    //转换输入量坐标系
     if (simple_mode == SimpleMode::SIMPLE) {
         // rotate roll, pitch input by -initial simple heading (i.e. north facing)
         rollx = channel_roll->get_control_in()*simple_cos_yaw - channel_pitch->get_control_in()*simple_sin_yaw;

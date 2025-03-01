@@ -231,6 +231,7 @@ public:
     friend class _AutoTakeoff;
 
     friend class PayloadPlace;
+    friend class ModeTop;
 
     Copter(void);
 
@@ -1052,6 +1053,10 @@ private:
 #endif
 #if MODE_TURTLE_ENABLED == ENABLED
     ModeTurtle mode_turtle;
+#endif
+
+#if MODE_TOP_ENABLED == ENABLED
+    ModeTop mode_top;
 #endif
 
     // mode.cpp

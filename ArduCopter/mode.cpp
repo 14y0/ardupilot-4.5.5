@@ -41,6 +41,12 @@ Mode *Copter::mode_from_mode_num(const Mode::Number mode)
             break;
 #endif
 
+#if MODE_TOP_ENABLED == ENABLED
+        case Mode::Number::TOP:
+            ret = &mode_top;
+            break;
+#endif
+
         case Mode::Number::STABILIZE:
             ret = &mode_stabilize;
             break;
@@ -959,37 +965,39 @@ void Mode::output_to_motors()
 Mode::AltHoldModeState Mode::get_alt_hold_state(float target_climb_rate_cms)
 {
     // Alt Hold State Machine Determination
-    if (!motors->armed()) {
+    if (!motors->armed()) {//飞行器上锁
         // the aircraft should moved to a shut down state
+    	//设置电机状态为禁用状态
         motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::SHUT_DOWN);
 
         // transition through states as aircraft spools down
+        //根据当前电机状态决定定高状态机状态
         switch (motors->get_spool_state()) {
-
+        //电机为禁止， 飞行器尚未起飞，状态机状态为停止
         case AP_Motors::SpoolState::SHUT_DOWN:
             return AltHold_MotorStopped;
-
+        //电机为地面怠速，状态机状态为地面怠速
         case AP_Motors::SpoolState::GROUND_IDLE:
             return AltHold_Landed_Ground_Idle;
-
-        default:
+        default://电机解除限制，准备起飞
             return AltHold_Landed_Pre_Takeoff;
         }
 
-    } else if (takeoff.running() || takeoff.triggered(target_climb_rate_cms)) {
+    } else if (takeoff.running() || takeoff.triggered(target_climb_rate_cms)) {//飞行器正在起飞或触发起飞
         // the aircraft is currently landed or taking off, asking for a positive climb rate and in THROTTLE_UNLIMITED
         // the aircraft should progress through the take off procedure
-        return AltHold_Takeoff;
+        return AltHold_Takeoff;//设置飞行器状态为起飞
 
-    } else if (!copter.ap.auto_armed || copter.ap.land_complete) {
+    }
+    else if (!copter.ap.auto_armed || copter.ap.land_complete) {  //飞行器解锁且未在空中并且未触发起飞
         // the aircraft is armed and landed
-        if (target_climb_rate_cms < 0.0f && !copter.ap.using_interlock) {
+        if (target_climb_rate_cms < 0.0f && !copter.ap.using_interlock) {//目标爬升率过低
             // the aircraft should move to a ground idle state
-            motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::GROUND_IDLE);
+            motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::GROUND_IDLE);//进入地面怠速状态
 
         } else {
             // the aircraft should prepare for imminent take off
-            motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
+            motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);//进入准备起飞状态
         }
 
         if (motors->get_spool_state() == AP_Motors::SpoolState::GROUND_IDLE) {
@@ -1003,6 +1011,7 @@ Mode::AltHoldModeState Mode::get_alt_hold_state(float target_climb_rate_cms)
 
     } else {
         // the aircraft is in a flying state
+    	//飞行器进入飞行模式
         motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
         return AltHold_Flying;
     }

@@ -95,6 +95,7 @@ public:
         AUTOROTATE =   26,  // Autonomous autorotation
         AUTO_RTL =     27,  // Auto RTL, this is not a true mode, AUTO will report as this mode if entered to perform a DO_LAND_START Landing sequence
         TURTLE =       28,  // Flip over after crash
+        TOP    =       29,  // 在参数树中传进来
 
         // Mode number 127 reserved for the "drone show mode" in the Skybrush
         // fork at https://github.com/skybrush-io/ardupilot
@@ -376,6 +377,53 @@ public:
     // end pass-through functions
 };
 
+//TOP类的定义
+#if MODE_TOP_ENABLED == ENABLED
+class ModeTop : public Mode {
+
+public:
+    // inherit constructor
+    using Mode::Mode;
+    Number mode_number() const override { return Number::TOP; }
+
+    bool init(bool ignore_checks) override;
+    void run() override;
+
+    bool requires_GPS() const override { return false; }
+    bool has_manual_throttle() const override { return false; }
+    bool allows_arming(AP_Arming::Method method) const override { return false; };
+    bool is_autopilot() const override { return false; }
+    void output_to_motors() override;
+
+protected:
+
+    const char *name() const override { return "TOP"; }
+    const char *name4() const override { return "TOP"; }
+
+private:
+    Vector3f orig_attitude;         // original vehicle attitude before flip
+
+    enum class TopState : uint8_t {
+        Start,
+        Top,
+        Abandon
+    };
+    TopState _state;               // current state of flip
+    Mode::Number   orig_control_mode;   // flight mode when flip was initated
+    uint32_t  start_time_ms;          // time since flip began
+    int8_t    pitch_dir;        // pitch direction (-1 = pitch forward, 1 = pitch back)
+    float throttle_out;
+    int16_t Differ_Speed=0;
+    uint16_t Thr_Forward_L=0;
+    uint16_t Thr_Backup_L=0;
+    uint16_t Thr_Forward_R=0;
+    uint16_t Thr_Backup_R=0;
+    uint16_t last_value[8];
+    void update_Thr(void);
+    void read_channels(void);
+};
+
+#endif
 
 #if MODE_ACRO_ENABLED == ENABLED
 class ModeAcro : public Mode {

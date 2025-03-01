@@ -190,7 +190,7 @@ bool sdcard_retry(void)
         if (sdcard_init()) {
 #if AP_FILESYSTEM_FILE_WRITING_ENABLED
             // create APM directory
-            AP::FS().mkdir("/APM");
+            AP::FS().mkdir("/MengChuang");
 #endif
         }
     }

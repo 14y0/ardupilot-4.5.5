@@ -128,3 +128,5 @@ bool AP_BattMonitor_Analog::has_current() const
 }
 
 #endif  // AP_BATTERY_ANALOG_ENABLED
+
+

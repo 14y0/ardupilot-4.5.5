@@ -18,17 +18,25 @@ void ModeStabilize::run()
     // get pilot's desired yaw rate
     float target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->norm_input_dz());
 
-    if (!motors->armed()) {
+    if (!motors->armed()) //如果电机未解锁
+    {
+    	//禁用所有电机输出
         // Motors should be Stopped
         motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::SHUT_DOWN);
-    } else if (copter.ap.throttle_zero
-               || (copter.air_mode == AirMode::AIRMODE_ENABLED && motors->get_spool_state() == AP_Motors::SpoolState::SHUT_DOWN)) {
+    }
+    //油门J输入未设置死区或飞行器为空中模式并且电机当前状态为禁用状态
+    else if (copter.ap.throttle_zero
+               || (copter.air_mode == AirMode::AIRMODE_ENABLED && motors->get_spool_state() == AP_Motors::SpoolState::SHUT_DOWN))
+    {
         // throttle_zero is never true in air mode, but the motors should be allowed to go through ground idle
         // in order to facilitate the spoolup block
-
         // Attempting to Land
+    	//将电机状态设置为地面息速
         motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::GROUND_IDLE);
-    } else {
+    }
+    else
+    {
+    	//设置电机状态为自由状态准备起飞
         motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
     }
 
@@ -50,6 +58,7 @@ void ModeStabilize::run()
         break;
 
     case AP_Motors::SpoolState::THROTTLE_UNLIMITED:
+    	//电机未停止时降落标志置零
         // clear landing flag above zero throttle
         if (!motors->limit.throttle_lower) {
             set_land_complete(false);

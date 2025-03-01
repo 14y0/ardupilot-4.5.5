@@ -421,7 +421,6 @@ void AP_SerialManager::init()
 {
     // always reset passthru port2 on boot
     passthru_port2.set_and_save_ifchanged(-1);
-
 #ifdef HAL_OTG1_CONFIG
     /*
       prevent users from changing USB protocol to other than
@@ -433,9 +432,7 @@ void AP_SerialManager::init()
         state[0].protocol.set(SerialProtocol_MAVLink2);
     }
 #endif
-
     init_console();
-
     // initialise serial ports
     for (uint8_t i=1; i<SERIALMANAGER_NUM_PORTS; i++) {
         auto *uart = hal.serial(i);

@@ -13,36 +13,37 @@ bool ModeLoiter::init(bool ignore_checks)
         float target_roll, target_pitch;
         // apply SIMPLE mode transform to pilot inputs
         update_simple_mode();
-
+        //简单模式检查
         // convert pilot input to lean angles
+        //遥控器信号转为期望倾角
         get_pilot_desired_lean_angles(target_roll, target_pitch, loiter_nav->get_angle_max_cd(), attitude_control->get_althold_lean_angle_max_cd());
-
+        //通过期望倾角设置定点控制器期望加速度
         // process pilot's roll and pitch input
         loiter_nav->set_pilot_desired_acceleration(target_roll, target_pitch);
-    } else {
+    } else {//遥控器状态异常
         // clear out pilot desired acceleration in case radio failsafe event occurs and we do not switch to RTL for some reason
+    	//清空期望加速度
         loiter_nav->clear_pilot_desired_acceleration();
     }
+    //定点控制器初始化，将当前速度转换为前馈速度
     loiter_nav->init_target();
-
+    //初始化z轴位置控制器
     // initialise the vertical position controller
     if (!pos_control->is_active_z()) {
         pos_control->init_z_controller();
     }
-
+    //设置z轴速度及加速度限制
     // set vertical speed and acceleration limits
     pos_control->set_max_speed_accel_z(-get_pilot_speed_dn(), g.pilot_speed_up, g.pilot_accel_z);
     pos_control->set_correction_speed_accel_z(-get_pilot_speed_dn(), g.pilot_speed_up, g.pilot_accel_z);
 
 #if AC_PRECLAND_ENABLED
-    _precision_loiter_active = false;
+    _precision_loiter_active = false; //如果没有配置精准降落
 #endif
-
     return true;
 }
-
 #if AC_PRECLAND_ENABLED
-bool ModeLoiter::do_precision_loiter()
+bool ModeLoiter::do_precision_loiter()//如果开启精准降落
 {
     if (!_precision_loiter_enabled) {
         return false;
@@ -89,7 +90,7 @@ void ModeLoiter::run()
 
     // set vertical speed and acceleration limits
     pos_control->set_max_speed_accel_z(-get_pilot_speed_dn(), g.pilot_speed_up, g.pilot_accel_z);
-
+    //检查遥控器状态并根据遥控输入配置期望加速度(xy方向)，及爬升串(z方向)
     // process pilot inputs unless we are in radio failsafe
     if (!copter.failsafe.radio) {
         // apply SIMPLE mode transform to pilot inputs
@@ -113,11 +114,12 @@ void ModeLoiter::run()
     }
 
     // relax loiter target if we might be landed
+    //若飞行器已着陆，设置当前位置作为目标位置并清空位置控制器
     if (copter.ap.land_complete_maybe) {
         loiter_nav->soften_for_landing();
     }
-
     // Loiter State Machine Determination
+    //判断状态机状态
     AltHoldModeState loiter_state = get_alt_hold_state(target_climb_rate);
 
     // Loiter State Machine
@@ -155,6 +157,7 @@ void ModeLoiter::run()
         takeoff.do_pilot_takeoff(target_climb_rate);
 
         // run loiter controller
+        //更新定点导航并将相关参数导入姿态控制器
         loiter_nav->update();
 
         // call attitude controller
@@ -167,9 +170,9 @@ void ModeLoiter::run()
 
 #if AC_PRECLAND_ENABLED
         bool precision_loiter_old_state = _precision_loiter_active;
-        if (do_precision_loiter()) {
+        if (do_precision_loiter()) { //运行精准定点
             precision_loiter_xy();
-            _precision_loiter_active = true;
+            _precision_loiter_active = true; //若使能精准降落
         } else {
             _precision_loiter_active = false;
         }
@@ -178,6 +181,7 @@ void ModeLoiter::run()
             loiter_nav->init_target();
         }
         // run loiter controller if we are not doing prec loiter
+        //若精准定点未使能，使用普通定点
         if (!_precision_loiter_active) {
             loiter_nav->update();
         }
@@ -186,20 +190,23 @@ void ModeLoiter::run()
 #endif
 
         // call attitude controller
+        //调用姿态控制器完成xy方向控制
         attitude_control->input_thrust_vector_rate_heading(loiter_nav->get_thrust_vector(), target_yaw_rate, false);
 
         // get avoidance adjusted climb rate
+        //计算爬升率
         target_climb_rate = get_avoidance_adjusted_climbrate(target_climb_rate);
 
         // update the vertical offset based on the surface measurement
         copter.surface_tracking.update_surface_offset();
-
         // Send the commanded climb rate to the position controller
+        //调用z轴控制器
         pos_control->set_pos_target_z_from_climb_rate_cm(target_climb_rate);
         break;
     }
 
     // run the vertical position controller and set output throttle
+    //调用z轴控制器
     pos_control->update_z_controller();
 }
 

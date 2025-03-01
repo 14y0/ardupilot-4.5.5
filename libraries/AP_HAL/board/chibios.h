@@ -118,7 +118,8 @@
 
 // put all storage of files under /APM directory
 #ifndef HAL_BOARD_STORAGE_DIRECTORY
-#define HAL_BOARD_STORAGE_DIRECTORY "/APM"
+//#define HAL_BOARD_STORAGE_DIRECTORY "/APM"
+#define HAL_BOARD_STORAGE_DIRECTORY "/MengChuang"
 #endif
 
 #if defined(STM32_WSPI_USE_QUADSPI1) && STM32_WSPI_USE_QUADSPI1

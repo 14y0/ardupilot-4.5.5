@@ -43,6 +43,13 @@
 
 #include "include/mavlink/v2.0/mavlink_types.h"
 
+
+//2024年08月31日添加，限制MP地面站的连接
+//#undef MAVLINK_STX_MAVLINK1
+//#define MAVLINK_STX_MAVLINK1 251
+//#undef MAVLINK_STX
+//#define MAVLINK_STX 247
+
 /// MAVLink streams used for each telemetry port
 extern AP_HAL::UARTDriver	*mavlink_comm_port[MAVLINK_COMM_NUM_BUFFERS];
 extern bool gcs_alternative_active[MAVLINK_COMM_NUM_BUFFERS];
