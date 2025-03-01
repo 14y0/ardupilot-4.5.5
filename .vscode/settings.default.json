@@ -1,4 +1,25 @@
 {
     "cSpell.language": "en-GB",
-    "astyle.astylerc": "${workspaceFolder}/Tools/CodeStyle/astylerc"
+    "astyle.astylerc": "${workspaceFolder}/Tools/CodeStyle/astylerc",
+    "files.associations": {
+        "*.tcc": "cpp",
+        "unordered_map": "cpp",
+        "fstream": "cpp",
+        "istream": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "iostream": "cpp",
+        "typeinfo": "cpp",
+        "cstdlib": "cpp",
+        "random": "cpp",
+        "iosfwd": "cpp",
+        "limits": "cpp",
+        "stop_token": "cpp",
+        "streambuf": "cpp",
+        "numeric": "cpp",
+        "mutex": "cpp",
+        "cmath": "cpp",
+        "cstdint": "cpp"
+    },
+    "cmake.sourceDirectory": "D:/SIT/FEIKONG/CODE/ardupilot/modules/gbenchmark"
 }

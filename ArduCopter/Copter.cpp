@@ -153,6 +153,7 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
     SCHED_TASK(fence_check,           25,    100,  7),
 #endif
     SCHED_TASK_CLASS(AP_GPS,               &copter.gps,                 update,          50, 200,   9),
+    SCHED_TASK(update_swarm_message,50,200,10),
 #if AP_OPTICALFLOW_ENABLED
     SCHED_TASK_CLASS(AP_OpticalFlow,          &copter.optflow,             update,         200, 160,  12),
 #endif
@@ -706,14 +707,14 @@ void Copter::update_simple_mode(void)
     float rollx, pitchx;
 
     // exit immediately if no new radio frame or not in simple mode
-    // ÅÐ¶Ï·ÉÐÐÆ÷×´Ì¬
+    // ï¿½Ð¶Ï·ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
     if (simple_mode == SimpleMode::NONE || !ap.new_radio_frame) {
         return;
     }
 
     // mark radio frame as consumed
     ap.new_radio_frame = false;
-    //×ª»»ÊäÈëÁ¿×ø±êÏµ
+    //×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµ
     if (simple_mode == SimpleMode::SIMPLE) {
         // rotate roll, pitch input by -initial simple heading (i.e. north facing)
         rollx = channel_roll->get_control_in()*simple_cos_yaw - channel_pitch->get_control_in()*simple_sin_yaw;
@@ -814,6 +815,172 @@ bool Copter::get_rate_ef_targets(Vector3f& rate_ef_targets) const
         rate_ef_targets = attitude_control->get_rate_ef_targets();
     }
     return true;
+}
+
+void Copter::init_swarm()
+{
+    swarm_uart = AP::serialmanager().find_serial(AP_SerialManager::SerialProtocol_Swarm, 0);
+    if (swarm_uart == nullptr)
+    {
+        return;
+    }
+    swarm_uart->begin(57600);
+    swarm_is_leader = false;
+    message_state = MessageState_WaitingForHeader;
+}
+
+void Copter::update_swarm_message()
+{
+    if (swarm_uart == nullptr)
+    {
+        return;
+    }
+    if (swarm_is_leader == false)
+    {
+        int16_t nbytes = swarm_uart->available();
+        while (nbytes-- > 0)
+        {
+            char c = swarm_uart->read();
+            switch (message_state) {
+
+                default:
+                case MessageState_WaitingForHeader:
+                    if (c == AP_SWARM_HEADER) {
+                        message_state = MessageState_WaitingForMsgId;
+                        swarmbuf_len = 0;
+                    }
+                    break;
+
+                case MessageState_WaitingForMsgId:
+                    swarm_msg_id = c;
+                    switch (swarm_msg_id) {
+                    case AP_SWARM_MSGID_CONTENT:
+                        message_state = MessageState_WaitingForLen;
+                        break;
+                    default:
+                        // invalid message id
+                        message_state = MessageState_WaitingForHeader;
+                        break;
+                    }
+                    break;
+
+                case MessageState_WaitingForLen:
+                    swarm_msg_len = c;
+                    if (swarm_msg_len > AP_SWARM_MSG_LEN_MAX) {
+                        // invalid message length
+                        message_state = MessageState_WaitingForHeader;
+                    } else {
+                        message_state = MessageState_WaitingForContents;
+                    }
+                    break;
+
+                case MessageState_WaitingForContents:
+                    // add to buffer
+                    swarmbuf[swarmbuf_len++] = c;
+                    if ((swarmbuf_len == swarm_msg_len) || (swarmbuf_len == sizeof(swarmbuf))) {
+                        // process buffer
+                        swarm_buffer();
+                        // reset state for next message
+                        message_state = MessageState_WaitingForHeader;
+                    }
+                    break;
+            }
+        }
+    }
+    else{
+        hal.console->print("start_send");
+        uint8_t send_buf[28];
+        uint8_t crc = 0;
+        Location send_loc;
+        Vector3f send_vel;
+        if (ahrs.get_location(send_loc) && ahrs.get_velocity_NED(send_vel))
+        {
+            send_buf[0] = AP_SWARM_HEADER;
+            send_buf[1] = AP_SWARM_MSGID_CONTENT;
+            crc ^= send_buf[1];
+            send_buf[2] = 25;
+            crc ^= send_buf[2];
+            float data_F;
+            int32_t data_I;
+            data_I = send_loc.lat;
+            // hal.console->printf("lat:%ld\n",data_I);
+            memcpy(&send_buf[3], &data_I, sizeof(float));
+            data_I = send_loc.lng;
+            // hal.console->printf("lng:%ld\n",data_I);
+            memcpy(&send_buf[7], &data_I, sizeof(float));
+            data_I = send_loc.alt * 10UL;
+            // hal.console->printf("alt:%ld\n",data_I);
+            memcpy(&send_buf[11], &data_I, sizeof(float));
+            data_F = send_vel.x * 100;
+            // hal.console->printf("vx:%f\n",data_F);
+            memcpy(&send_buf[15], &data_F, sizeof(float));
+            data_F = send_vel.y * 100;
+            // hal.console->printf("vy:%f\n",data_F);
+            memcpy(&send_buf[19], &data_F, sizeof(float));
+            data_F = send_vel.z * 100;
+            // hal.console->printf("vz:%f\n",data_F);
+            memcpy(&send_buf[23], &data_F, sizeof(float));
+
+            for (uint8_t i=0; i<24; i++) {
+                crc ^= send_buf[3+i];
+            }
+            send_buf[27] = crc;
+            swarm_uart->write(send_buf,sizeof(send_buf));  
+        }
+        
+    }
+}
+
+void Copter::swarm_buffer()
+{
+    uint8_t checksum = 0;
+    checksum ^= swarm_msg_id;
+    checksum ^= swarm_msg_len;
+    for (uint8_t i=0; i<swarmbuf_len; i++) {
+        checksum ^= swarmbuf[i];
+    }
+    // return if failed checksum check
+    if (checksum != 0) {
+        hal.console->printf("crc");
+        return;
+    }
+
+    bool parsed = false;
+    switch (swarm_msg_id) {
+
+        case AP_SWARM_MSGID_CONTENT:
+            {
+                uint32_t out;
+                out = ((uint32_t)swarmbuf[3] << 24 | (uint32_t)swarmbuf[2] << 16 | (uint32_t)swarmbuf[1] << 8 | (uint32_t)swarmbuf[0]);
+                memcpy(&swarm_pos.x,&out,sizeof(int32_t));
+                // hal.console->printf("lat:%ld\n",swarm_pos.x);
+                out = ((uint32_t)swarmbuf[7] << 24 | (uint32_t)swarmbuf[6] << 16 | (uint32_t)swarmbuf[5] << 8 | (uint32_t)swarmbuf[4]);
+                memcpy(&swarm_pos.y,&out,sizeof(int32_t));
+                // hal.console->printf("lng:%ld\n",swarm_pos.y);
+                out = ((uint32_t)swarmbuf[11] << 24 | (uint32_t)swarmbuf[10] << 16 | (uint32_t)swarmbuf[9] << 8 | (uint32_t)swarmbuf[8]);
+                memcpy(&swarm_pos.z,&out,sizeof(int32_t));
+                // hal.console->printf("alt:%ld\n",swarm_pos.z);
+                out = ((uint32_t)swarmbuf[15] << 24 | (uint32_t)swarmbuf[14] << 16 | (uint32_t)swarmbuf[13] << 8 | (uint32_t)swarmbuf[12]);
+                memcpy(&swarm_vel.x,&out,sizeof(float));
+                // hal.console->printf("vx:%f\n",swarm_vel.x);
+                out = ((uint32_t)swarmbuf[19] << 24 | (uint32_t)swarmbuf[18] << 16 | (uint32_t)swarmbuf[17] << 8 | (uint32_t)swarmbuf[16]);
+                memcpy(&swarm_vel.y,&out,sizeof(float));
+                // hal.console->printf("vy:%f\n",swarm_vel.y);
+                out = ((uint32_t)swarmbuf[23] << 24 | (uint32_t)swarmbuf[22] << 16 | (uint32_t)swarmbuf[21] << 8 | (uint32_t)swarmbuf[20]);
+                memcpy(&swarm_vel.z,&out,sizeof(float));
+                // hal.console->printf("vz:%f\n",swarm_vel.z);
+                parsed = true;
+            }
+            break;
+        default:
+            // unrecognised message id
+            break;
+    }
+    
+    // record success
+    if (parsed) {
+        swarm_update_ms = AP_HAL::millis();
+    }
 }
 
 /*

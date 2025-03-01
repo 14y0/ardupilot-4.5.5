@@ -163,7 +163,7 @@
 #endif
 
 
-// Acro - fly vehicle in ·ÉéÜÄ£Ê½ top mode
+// Acro - fly vehicle in ï¿½ï¿½ï¿½ï¿½Ä£Ê½ top mode
 #ifndef MODE_TOP_ENABLED
 # define MODE_TOP_ENABLED ENABLED
 #endif
@@ -257,7 +257,10 @@
 #ifndef MODE_THROW_ENABLED
 # define MODE_THROW_ENABLED ENABLED
 #endif
-
+//686879
+#ifndef MODE_SWARM_ENABLED
+# define MODE_SWARM_ENABLED ENABLED
+#endif
 //////////////////////////////////////////////////////////////////////////////
 // ZigZag - allow vehicle to fly in a zigzag manner with predefined point A B
 #ifndef MODE_ZIGZAG_ENABLED

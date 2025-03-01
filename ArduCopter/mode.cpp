@@ -185,6 +185,12 @@ Mode *Copter::mode_from_mode_num(const Mode::Number mode)
             break;
 #endif
 
+#if MODE_SWARM_ENABLED == ENABLED
+        case Mode::Number::SWARM:
+            ret = &mode_swarm;
+            break;
+#endif
+
         default:
             break;
     }
@@ -965,39 +971,39 @@ void Mode::output_to_motors()
 Mode::AltHoldModeState Mode::get_alt_hold_state(float target_climb_rate_cms)
 {
     // Alt Hold State Machine Determination
-    if (!motors->armed()) {//·ÉÐÐÆ÷ÉÏËø
+    if (!motors->armed()) {//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         // the aircraft should moved to a shut down state
-    	//ÉèÖÃµç»ú×´Ì¬Îª½ûÓÃ×´Ì¬
+    	//ï¿½ï¿½ï¿½Ãµï¿½ï¿½×´Ì¬Îªï¿½ï¿½ï¿½ï¿½×´Ì¬
         motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::SHUT_DOWN);
 
         // transition through states as aircraft spools down
-        //¸ù¾Ýµ±Ç°µç»ú×´Ì¬¾ö¶¨¶¨¸ß×´Ì¬»ú×´Ì¬
+        //ï¿½ï¿½ï¿½Ýµï¿½Ç°ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½×´Ì¬
         switch (motors->get_spool_state()) {
-        //µç»úÎª½ûÖ¹£¬ ·ÉÐÐÆ÷ÉÐÎ´Æð·É£¬×´Ì¬»ú×´Ì¬ÎªÍ£Ö¹
+        //ï¿½ï¿½ï¿½Îªï¿½ï¿½Ö¹ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½É£ï¿½×´Ì¬ï¿½ï¿½×´Ì¬ÎªÍ£Ö¹
         case AP_Motors::SpoolState::SHUT_DOWN:
             return AltHold_MotorStopped;
-        //µç»úÎªµØÃæµ¡ËÙ£¬×´Ì¬»ú×´Ì¬ÎªµØÃæµ¡ËÙ
+        //ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½æµ¡ï¿½Ù£ï¿½×´Ì¬ï¿½ï¿½×´Ì¬Îªï¿½ï¿½ï¿½æµ¡ï¿½ï¿½
         case AP_Motors::SpoolState::GROUND_IDLE:
             return AltHold_Landed_Ground_Idle;
-        default://µç»ú½â³ýÏÞÖÆ£¬×¼±¸Æð·É
+        default://ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ£ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½
             return AltHold_Landed_Pre_Takeoff;
         }
 
-    } else if (takeoff.running() || takeoff.triggered(target_climb_rate_cms)) {//·ÉÐÐÆ÷ÕýÔÚÆð·É»ò´¥·¢Æð·É
+    } else if (takeoff.running() || takeoff.triggered(target_climb_rate_cms)) {//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É»ò´¥·ï¿½ï¿½ï¿½ï¿½
         // the aircraft is currently landed or taking off, asking for a positive climb rate and in THROTTLE_UNLIMITED
         // the aircraft should progress through the take off procedure
-        return AltHold_Takeoff;//ÉèÖÃ·ÉÐÐÆ÷×´Ì¬ÎªÆð·É
+        return AltHold_Takeoff;//ï¿½ï¿½ï¿½Ã·ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬Îªï¿½ï¿½ï¿½
 
     }
-    else if (!copter.ap.auto_armed || copter.ap.land_complete) {  //·ÉÐÐÆ÷½âËøÇÒÎ´ÔÚ¿ÕÖÐ²¢ÇÒÎ´´¥·¢Æð·É
+    else if (!copter.ap.auto_armed || copter.ap.land_complete) {  //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½Ú¿ï¿½ï¿½Ð²ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         // the aircraft is armed and landed
-        if (target_climb_rate_cms < 0.0f && !copter.ap.using_interlock) {//Ä¿±êÅÀÉýÂÊ¹ýµÍ
+        if (target_climb_rate_cms < 0.0f && !copter.ap.using_interlock) {//Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½ï¿½
             // the aircraft should move to a ground idle state
-            motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::GROUND_IDLE);//½øÈëµØÃæµ¡ËÙ×´Ì¬
+            motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::GROUND_IDLE);//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½æµ¡ï¿½ï¿½×´Ì¬
 
         } else {
             // the aircraft should prepare for imminent take off
-            motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);//½øÈë×¼±¸Æð·É×´Ì¬
+            motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);//ï¿½ï¿½ï¿½ï¿½×¼ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
         }
 
         if (motors->get_spool_state() == AP_Motors::SpoolState::GROUND_IDLE) {
@@ -1011,7 +1017,7 @@ Mode::AltHoldModeState Mode::get_alt_hold_state(float target_climb_rate_cms)
 
     } else {
         // the aircraft is in a flying state
-    	//·ÉÐÐÆ÷½øÈë·ÉÐÐÄ£Ê½
+    	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£Ê½
         motors->set_desired_spool_state(AP_Motors::DesiredSpoolState::THROTTLE_UNLIMITED);
         return AltHold_Flying;
     }

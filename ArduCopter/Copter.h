@@ -178,6 +178,13 @@
 #endif
 #include "mode.h"
 
+//SWARM相关定义----------------------------------------------------------//
+#define AP_SWARM_HEADER 0x01
+#define AP_SWARM_MSGID_SETUP 0x02
+#define AP_SWARM_MSGID_CONTENT 0x03
+#define AP_SWARM_MSG_LEN_MAX 254
+//----------------------------------------------------------------------//
+
 class Copter : public AP_Vehicle {
 public:
     friend class GCS_MAVLINK_Copter;
@@ -232,11 +239,27 @@ public:
 
     friend class PayloadPlace;
     friend class ModeTop;
-
+    friend class ModeSwarm;
     Copter(void);
 
 private:
-
+    //Swarm相关变量-----------------------------------------------------//
+    AP_HAL::UARTDriver *swarm_uart;
+    enum MessageState{
+        MessageState_WaitingForHeader = 0,
+        MessageState_WaitingForMsgId = 1,
+        MessageState_WaitingForLen = 2,
+        MessageState_WaitingForContents = 3
+    } message_state;
+    uint8_t swarm_msg_id;
+    uint8_t swarm_msg_len;
+    bool swarm_is_leader;
+    uint8_t swarmbuf[AP_SWARM_MSG_LEN_MAX];
+    uint8_t swarmbuf_len = 0;
+    uint32_t swarm_update_ms = 0;
+    Vector3f swarm_vel;
+    Vector3l swarm_pos;
+    //-----------------------------------------------------------------//
     // key aircraft parameters passed to multiple libraries
     AP_MultiCopter aparm;
 
@@ -675,6 +698,12 @@ private:
     void update_using_interlock();
 
     // Copter.cpp
+    //swarm相关函数 686879 ----------------------------------------------------//
+    void init_swarm();
+    bool is_leader = false;
+    void update_swarm_message();
+    void swarm_buffer();
+    //------------------------------------------------------------------------//
     void get_scheduler_tasks(const AP_Scheduler::Task *&tasks,
                              uint8_t &task_count,
                              uint32_t &log_bit) override;
@@ -1057,6 +1086,9 @@ private:
 
 #if MODE_TOP_ENABLED == ENABLED
     ModeTop mode_top;
+#endif
+#if MODE_SWARM_ENABLED == ENABLED
+    ModeSwarm mode_swarm;
 #endif
 
     // mode.cpp
