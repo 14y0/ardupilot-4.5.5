@@ -39,7 +39,7 @@ void ModeSwarm::run()
         const Vector3f dist_vec_offs_neu(dist_vec_offs.x * 100.0f, dist_vec_offs.y * 100.0f, -dist_vec_offs.z * 100.0f);
 
         // calculate desired velocity vector in cm/s in NEU
-        const float kp = 0.05;
+        const float kp = 0.1;
         desired_velocity_neu_cms.x = (vel_of_target.x) + (dist_vec_offs_neu.x * kp);
         desired_velocity_neu_cms.y = (vel_of_target.y) + (dist_vec_offs_neu.y * kp);
         desired_velocity_neu_cms.z = (-vel_of_target.z) + (dist_vec_offs_neu.z * kp);//686879
@@ -92,12 +92,12 @@ bool ModeSwarm::get_ned_target_dist_and_vel(Vector3f &dist_ned, Vector3f &dist_w
     }
 
     // calculate difference
-    const Vector3f dist_vec = current_loc.get_distance_NED(target_loc)-position_offset;
+    const Vector3f dist_vec = current_loc.get_distance_NED(target_loc)+position_offset;
     // const Vector3f print_vec = current_loc.get_distance_NED(target_loc);
     // hal.console->printf("ned(%f,%f,%f)\n",print_vec.x,print_vec.y,print_vec.z);
     // hal.console->printf("vel(%f,%f,%f)\n",veh_vel.x,veh_vel.y,veh_vel.z);
     // fail if too far
-    if (dist_vec.length() > 15) {
+    if (dist_vec.length() > 20) {
         return false;
     }
 
