@@ -1,25 +1,6 @@
 #include "Copter.h"
 
 #if MODE_TOP_ENABLED == ENABLED
-
-/*
- * Init and run calls for flip flight mode
- *      original implementation in 2010 by Jose Julio
- *      Adapted and updated for AC2 in 2011 by Jason Short
- *
- *      Controls:
- *          RC7_OPTION - RC12_OPTION parameter must be set to "Flip" (AUXSW_FLIP) which is "2"
- *          Pilot switches to Stabilize, Acro or AltHold flight mode and puts ch7/ch8 switch to ON position
- *          Vehicle will Roll right by default but if roll or pitch stick is held slightly left, forward or back it will flip in that direction
- *          Vehicle should complete the roll within 2.5sec and will then return to the original flight mode it was in before flip was triggered
- *          Pilot may manually exit flip by switching off ch7/ch8 or by moving roll stick to >40deg left or right
- *
- *      State machine approach:
- *          FlipState::Start (while copter is leaning <45deg) : roll right at 400deg/sec, increase throttle
- *          FlipState::Roll (while copter is between +45deg ~ -90) : roll right at 400deg/sec, reduce throttle
- *          FlipState::Recover (while copter is between -90deg and original target angle) : use earth frame angle controller to return vehicle to original attitude
- */
-
 #define TOP_THR_INC        0.25f   // throttle increase during FlipState::Start stage (under 45deg lean angle)
 #define TOP_THR_DEC        0.24f   // throttle decrease during FlipState::Roll stage (between 45deg ~ -90deg roll)
 #define TOP_ROTATION_RATE  8500   // rotation rate request in centi-degrees / sec (i.e. 400 deg/sec)
@@ -35,40 +16,41 @@
 bool ModeTop::init(bool ignore_checks)
 {
     // only allow flip from some flight modes, for example ACRO, Stabilize, AltHold or FlowHold flight modes
+
     // if in acro or stabilize ensure throttle is above zero
-	//状态检查
-    //if (copter.ap.throttle_zero && (copter.flightmode->mode_number() == Mode::Number::ACRO || copter.flightmode->mode_number() == Mode::Number::STABILIZE)) {
-    //    return false;
-    //}
-    if (copter.flightmode->mode_number() != Mode::Number::STABILIZE){
+    // if (copter.ap.throttle_zero && (copter.flightmode->mode_number() == Mode::Number::ACRO || copter.flightmode->mode_number() == Mode::Number::STABILIZE)) {
+    //     return false;
+    // }
+
+    if (copter.flightmode->mode_number() != Mode::Number::STABILIZE && copter.flightmode->mode_number() != Mode::Number::ALT_HOLD){
         return false;
     }
+
     // ensure roll input is less than 40deg
     if (abs(channel_roll->get_control_in()) >= 4000) {
         return false;
     }
+
     // only allow flip when flying
     if (!motors->armed() || copter.ap.land_complete) {
         return false;
     }
 
     // capture original flight mode so that we can return to it after completion
-    //获取原 飞行模式
     orig_control_mode = copter.flightmode->mode_number();
 
     // initialise state
-    //设置初始状态
     _state = TopState::Start;
     start_time_ms = millis();
     pitch_dir = -1;
     throttle_out = 0.0f;
 
     // capture current attitude which will be used during the FlipState::Recovery stage
-    //设置倾角限幅
     const float angle_max = copter.aparm.angle_max;
     orig_attitude.x = constrain_float(ahrs.roll_sensor, -angle_max, angle_max);
     orig_attitude.y = constrain_float(ahrs.pitch_sensor, -angle_max, angle_max);
     orig_attitude.z = ahrs.yaw_sensor;
+
     return true;
 }
 
@@ -97,7 +79,7 @@ void ModeTop::run()
 
     // state machine
     switch (_state) {
-    //上升状态
+
     case TopState::Start:
         // under 45 degrees request 400deg/sec roll or pitch
         attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, 0.0f , 0.0f);
@@ -111,13 +93,13 @@ void ModeTop::run()
         }
          break;
 
-     //顶部运动状态
+
     case TopState::Top:
         // between 45deg ~ -90deg request 400deg/sec roll
-    	//更新飞行器及车体运动输出量
         update_Thr();
         // decrease throttle
         break;
+
 
     case TopState::Abandon:
         // restore original flight mode
@@ -125,8 +107,10 @@ void ModeTop::run()
             // this should never happen but just in case
             copter.set_mode(Mode::Number::STABILIZE, ModeReason::UNKNOWN);
         }
+
         break;
     }
+
     // output pilot's throttle without angle boost
     attitude_control->set_throttle_out(throttle_out, true, g.throttle_filt);
 }
@@ -173,39 +157,41 @@ void ModeTop::update_Thr(void)
     int16_t Thr_Fix = 0;
 		Differ_Speed = Turn_Channel - Turn_Mid;
 	    //printf(" Differ_Speed:%d",Differ_Speed);
-		if (Differ_Speed>Threshold)//涓婅竟鐣� threshold=1000
+		if (Differ_Speed>Threshold)//上边界 threshold=1000
 		{
 			Differ_Speed = Threshold;
 		}
-		if (Differ_Speed<-Threshold)//差速小于阈值
+		if (Differ_Speed<-Threshold)//下边界
 		{
 			Differ_Speed = -Threshold;
 		}
 		//left
-		Thr_Fix = Thr_Channel+Differ_Speed;
-		if ((Thr_Fix-Thr_Mid)>0)
-		{
-			if ((Thr_Fix-Thr_Mid)>500)
-			{
-				Thr_Fix = 500+Thr_Mid;
-			}
-			Thr_Forward_L = (Thr_Fix-Thr_Mid)*Up_Rate;//淇濊瘉鍦�0鈥斺��10000涔嬮棿 锛屽墠杞�
-			Thr_Backup_L = 0; 
-		}
-		else
-		{
-			if ((Thr_Fix-Thr_Mid)<-500)
-			{
-				Thr_Fix = Thr_Mid-500;
-			}
-			Thr_Backup_L = (Thr_Fix-Thr_Mid)*-Up_Rate;
-			Thr_Forward_L = 0;
-		}
+        Thr_Fix = Thr_Channel+Differ_Speed;
+        if ((Thr_Fix-Thr_Mid)>0)
+        {
+            if ((Thr_Fix-Thr_Mid)>500)
+            {
+                Thr_Fix = 500+Thr_Mid;
+            }
+            Thr_Forward_L = (Thr_Fix-Thr_Mid)*Up_Rate;//保证在0——10000之间 ，前轮
+            Thr_Backup_L = 0; 
+        }
+        else
+        {
+            if ((Thr_Fix-Thr_Mid)<-500)
+            {
+                Thr_Fix = Thr_Mid-500;
+            }
+            Thr_Backup_L = (Thr_Fix-Thr_Mid)*-Up_Rate;
+            Thr_Forward_L = 0;
+        }
 		//right
 		Thr_Fix = Thr_Channel-Differ_Speed;
 		if ((Thr_Fix-Thr_Mid)>0)
 		{
-			if ((Thr_Fix-Thr_Mid)>1500)
+			if ((Thr_Fix-Th	}
+			Thr_Backup_L = (Thr_Fix-Thr_Mid)*-Up_Rate;
+			Thr_Forward_L =r_Mid)>1500)
 			{
 				Thr_Fix = 1500+Thr_Mid;
 			}
