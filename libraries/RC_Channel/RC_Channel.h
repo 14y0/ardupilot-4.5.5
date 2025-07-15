@@ -285,6 +285,10 @@ public:
 
         // this must be higher than any aux function above
         AUX_FUNCTION_MAX =   308,
+        //686879
+        TOP = 309,
+        CLIMB = 310,
+        AUTO_TAKEOFF = 311,
     };
     typedef enum AUX_FUNC aux_func_t;
 

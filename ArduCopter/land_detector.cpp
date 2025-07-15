@@ -188,7 +188,11 @@ void Copter::update_throttle_mix()
         attitude_control->set_throttle_mix_min();
         return;
     }
-
+    //686879
+    if(flightmode->mode_number() == Mode::Number::CLIMB || flightmode->mode_number() == Mode::Number::RECOVERY || flightmode->mode_number() == Mode::Number::CAR || flightmode->mode_number() == Mode::Number::TOP){
+        attitude_control->set_throttle_mix_man();
+        return;
+    }
     if (flightmode->has_manual_throttle()) {
         // manual throttle
         if (channel_throttle->get_control_in() <= 0 && air_mode != AirMode::AIRMODE_ENABLED) {

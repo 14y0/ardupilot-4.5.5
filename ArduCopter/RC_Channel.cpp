@@ -192,7 +192,13 @@ bool RC_Channel_Copter::do_aux_function(const aux_func_t ch_option, const AuxSwi
             do_aux_function_change_mode(Mode::Number::RTL, ch_flag);
 #endif
             break;
-
+        case AUX_FUNC::AUTO_TAKEOFF:
+            #if MODE_AUTO_TAKEOFF_ENABLED == ENABLED
+                        do_aux_function_change_mode(Mode::Number::AUTO_TAKEOFF, ch_flag);
+            #endif
+            break;
+        //*MYP.S. 一键起飞模式写入遥控器通道
+        
         case AUX_FUNC::SAVE_TRIM:
             if ((ch_flag == AuxSwitchPos::HIGH) &&
                 (copter.flightmode->allows_save_trim()) &&
@@ -257,6 +263,14 @@ bool RC_Channel_Copter::do_aux_function(const aux_func_t ch_option, const AuxSwi
 #if MODE_AUTO_ENABLED == ENABLED
             do_aux_function_change_mode(Mode::Number::AUTO, ch_flag);
 #endif
+            break;
+        //686879
+        case AUX_FUNC::TOP:
+            do_aux_function_change_mode(Mode::Number::TOP, ch_flag);
+            break;
+
+        case AUX_FUNC::CLIMB:
+            do_aux_function_change_mode(Mode::Number::CLIMB, ch_flag);
             break;
 
         case AUX_FUNC::RANGEFINDER:

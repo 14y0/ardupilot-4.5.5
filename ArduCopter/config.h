@@ -163,11 +163,6 @@
 #endif
 
 
-// Acro - fly vehicle in ����ģʽ top mode
-#ifndef MODE_TOP_ENABLED
-# define MODE_TOP_ENABLED ENABLED
-#endif
-
 //////////////////////////////////////////////////////////////////////////////
 // Auto mode - allows vehicle to trace waypoints and perform automated actions
 #ifndef MODE_AUTO_ENABLED
@@ -196,6 +191,45 @@
 // flip - fly vehicle in flip in pitch and roll direction mode
 #ifndef MODE_FLIP_ENABLED
 # define MODE_FLIP_ENABLED ENABLED
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// climb 686879 - fly vehicle in flip in pitch and roll direction mode
+#ifndef MODE_CLIMB_ENABLED
+# define MODE_CLIMB_ENABLED ENABLED
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// fire 686879 - fly vehicle in flip in pitch and roll direction mode
+//!MYP.S. 4.5.5删除MODE_FIRE
+// #ifndef MODE_FIRE_ENABLED
+// # define MODE_FIRE_ENABLED ENABLED
+// #endif
+
+
+//////////////////////////////////////////////////////////////////////////////
+// RECOVERY 686879 - fly vehicle in flip in pitch and roll direction mode
+#ifndef MODE_RECOVERY_ENABLED
+# define MODE_RECOVERY_ENABLED ENABLED
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// // CAR 686879 - fly vehicle in flip in pitch and roll direction mode
+//!MYP.S. 4.5.5版本删除MODE_CAR
+// #ifndef MODE_CAR_ENABLED
+// # define MODE_CAR_ENABLED ENABLED
+// #endif
+
+//////////////////////////////////////////////////////////////////////////////
+// TOP 686879 - fly vehicle in flip in pitch and roll direction mode
+#ifndef MODE_TOP_ENABLED
+# define MODE_TOP_ENABLED ENABLED
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+//*Auto_takeoff - MYP.S. 一键起飞模式
+#ifndef MODE_AUTO_TAKEOFF_ENABLED
+# define MODE_AUTO_TAKEOFF_ENABLED ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////

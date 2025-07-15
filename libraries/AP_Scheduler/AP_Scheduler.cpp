@@ -420,6 +420,26 @@ void AP_Scheduler::loop()
 #endif
 }
 
+//*MYP.S. dt用的间隔计算函数 单位：s
+float AP_Scheduler::MY_LOOP()
+{
+    float MY_last_loop_time_s; 
+
+    const uint32_t sample_time_us = AP_HAL::micros();
+
+    if (MY_loop_timer_start_us == 0) {
+        MY_last_loop_time_s = get_loop_period_s();
+        
+    } else {
+        MY_last_loop_time_s = (sample_time_us - MY_loop_timer_start_us) * 1.0e-6;
+        // hal.console->printf("\n  lasttime:%u   ",MY_loop_timer_start_us);
+        // hal.console->printf("  nowtime:%u   ",sample_time_us);
+        // hal.console->printf("  loopdt:%f   \n",MY_last_loop_time_s);
+    }
+    MY_loop_timer_start_us=sample_time_us;
+    return MY_last_loop_time_s;
+}
+
 #if HAL_LOGGING_ENABLED
 void AP_Scheduler::update_logging()
 {

@@ -46,6 +46,11 @@ void Copter::crash_check()
         crash_counter = 0;
         return;
     }
+    //686879
+    if (flightmode->mode_number() == Mode::Number::CLIMB || flightmode->mode_number() == Mode::Number::RECOVERY || flightmode->mode_number() == Mode::Number::STABILIZE || flightmode->mode_number() == Mode::Number::CAR) {
+        crash_counter = 0;
+        return;
+    }
 
 #if MODE_AUTOROTATE_ENABLED == ENABLED
     //return immediately if in autorotation mode

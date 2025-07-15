@@ -235,6 +235,14 @@ public:
     friend class ModeAutorotate;
     friend class ModeTurtle;
 
+    //686879
+    friend class ModeClimb;
+    friend class ModeRecovery;
+    friend class ModeCar;
+    friend class ModeTop;
+    friend class ModeFire;
+    friend class ModeAuto_takeoff;//*MYP.S. 一键起飞模式 
+
     friend class _AutoTakeoff;
 
     friend class PayloadPlace;
@@ -243,6 +251,22 @@ public:
     Copter(void);
 
 private:
+
+    //*MYP.S. 激光雷达测距
+    float z_value=0;
+    float x1_value=0;
+    float x2_value=0;
+    float x1_filtered =0;//*MYP.S. 激光雷达滤波后的x1_value
+    float x2_filtered =0;//*MYP.S. 激光雷达滤波后的x2_value
+
+    //*MYP.S. 激光雷达测距历史数据
+    float x1_history[10] = {0};   // 保存最近10个x1_value
+    int x1_index = 0;             // 当前插入位置
+    bool x1_history_full = false; // 是否已经填满10个数据
+    float x2_history[10] = {0};   // 保存最近10个x2_value
+    int x2_index = 0;             // 当前插入位置
+    bool x2_history_full = false; // 是否已经填满10个数据
+
     //Swarm相关变量-----------------------------------------------------//
     AP_HAL::UARTDriver *swarm_uart;
     enum MessageState{
@@ -295,7 +319,7 @@ private:
         int8_t glitch_count;    // non-zero number indicates rangefinder is glitching
         uint32_t glitch_cleared_ms; // system time glitch cleared
         float terrain_offset_cm;    // filtered terrain offset (e.g. terrain's height above EKF origin)
-    } rangefinder_state, rangefinder_up_state;
+    } rangefinder_state, rangefinder_up_state,rangefinder_front_state;
 
     // return rangefinder height interpolated using inertial altitude
     bool get_rangefinder_height_interpolated_cm(int32_t& ret) const;
@@ -355,6 +379,9 @@ private:
     AP_ExternalControl_Copter external_control;
 #endif
 
+    //*MYP.S. 激光雷达滤波
+    float get_x1_weighted_average();
+    float get_x2_weighted_average();
 
     // system time in milliseconds of last recorded yaw reset from ekf
     uint32_t ekfYawReset_ms;
@@ -431,6 +458,7 @@ private:
     // There are multiple states defined such as STABILIZE, ACRO,
     Mode *flightmode;
     Mode::Number prev_control_mode;
+    Mode::Number desired_mode; //686879 use in rocovery
 
     RCMapper rcmap;
 
@@ -1084,9 +1112,25 @@ private:
     ModeTurtle mode_turtle;
 #endif
 
+//686879
+#if MODE_CLIMB_ENABLED == ENABLED
+    ModeClimb mode_climb;
+#endif
+#if MODE_RECOVERY_ENABLED == ENABLED
+    ModeRecovery mode_recovery;
+#endif
+//!MYP.S. 4.5.5删除MODE_CAR
+// #if MODE_CAR_ENABLED == ENABLED
+//     ModeCar mode_car;
+// #endif
 #if MODE_TOP_ENABLED == ENABLED
     ModeTop mode_top;
 #endif
+//*MYP.S. 声明mode_auto_takeoff
+#if MODE_AUTO_TAKEOFF_ENABLED == ENABLED
+    ModeAuto_takeoff mode_auto_takeoff;
+#endif
+
 #if MODE_SWARM_ENABLED == ENABLED
     ModeSwarm mode_swarm;
 #endif

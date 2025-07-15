@@ -3,6 +3,8 @@
 #include "Copter.h"
 #include <AP_Math/chirp.h>
 #include <AP_ExternalControl/AP_ExternalControl_config.h> // TODO why is this needed if Copter.h includes this
+#include <stdint.h>
+
 class Parameters;
 class ParametersG2;
 
@@ -95,8 +97,14 @@ public:
         AUTOROTATE =   26,  // Autonomous autorotation
         AUTO_RTL =     27,  // Auto RTL, this is not a true mode, AUTO will report as this mode if entered to perform a DO_LAND_START Landing sequence
         TURTLE =       28,  // Flip over after crash
-        TOP    =       29,  // �ڲ������д�����
-        SWARM = 34,
+        SWARM = 35,
+        //686879
+        CLIMB = 29,
+        RECOVERY = 30,
+        CAR = 31,
+        TOP = 32,
+        FIRE = 33,
+        AUTO_TAKEOFF = 34,//*MYP.S. 一键起飞模式
         // Mode number 127 reserved for the "drone show mode" in the Skybrush
         // fork at https://github.com/skybrush-io/ardupilot
     };
@@ -377,53 +385,6 @@ public:
     // end pass-through functions
 };
 
-//TOP��Ķ���
-#if MODE_TOP_ENABLED == ENABLED
-class ModeTop : public Mode {
-
-public:
-    // inherit constructor
-    using Mode::Mode;
-    Number mode_number() const override { return Number::TOP; }
-
-    bool init(bool ignore_checks) override;
-    void run() override;
-
-    bool requires_GPS() const override { return false; }
-    bool has_manual_throttle() const override { return false; }
-    bool allows_arming(AP_Arming::Method method) const override { return false; };
-    bool is_autopilot() const override { return false; }
-    void output_to_motors() override;
-
-protected:
-
-    const char *name() const override { return "TOP"; }
-    const char *name4() const override { return "TOP"; }
-
-private:
-    Vector3f orig_attitude;         // original vehicle attitude before flip
-
-    enum class TopState : uint8_t {
-        Start,
-        Top,
-        Abandon
-    };
-    TopState _state;               // current state of flip
-    Mode::Number   orig_control_mode;   // flight mode when flip was initated
-    uint32_t  start_time_ms;          // time since flip began
-    int8_t    pitch_dir;        // pitch direction (-1 = pitch forward, 1 = pitch back)
-    float throttle_out;
-    int16_t Differ_Speed=0;
-    uint16_t Thr_Forward_L=0;
-    uint16_t Thr_Backup_L=0;
-    uint16_t Thr_Forward_R=0;
-    uint16_t Thr_Backup_R=0;
-    uint16_t last_value[8];
-    void update_Thr(void);
-    void read_channels(void);
-};
-
-#endif
 
 #if MODE_ACRO_ENABLED == ENABLED
 class ModeAcro : public Mode {
@@ -958,6 +919,176 @@ private:
     int8_t    pitch_dir;           // pitch direction (-1 = pitch forward, 1 = pitch back)
 };
 
+//686879
+#if MODE_CLIMB_ENABLED == ENABLED
+class ModeClimb : public Mode {
+
+public:
+    // inherit constructor
+    using Mode::Mode;
+    Number mode_number() const override { return Number::CLIMB; }
+
+    bool init(bool ignore_checks) override;
+    void run() override;
+
+    bool requires_GPS() const override { return false; }
+    bool has_manual_throttle() const override { return false; }
+    bool allows_arming(AP_Arming::Method method) const override { return false; };
+    bool is_autopilot() const override { return false; }
+    void output_to_motors() override;
+
+protected:
+
+    const char *name() const override { return "CLIMB"; }
+    const char *name4() const override { return "CLIMB"; }
+
+private:
+
+    // Flip
+    Vector3f orig_attitude;         // original vehicle attitude before flip
+
+    enum class ClimbState : uint8_t {
+        Start,
+        Climb,
+        Abandon
+    };
+    ClimbState _state;               // current state of flip
+    Mode::Number   orig_control_mode;   // flight mode when flip was initated
+    uint32_t  start_time_ms;          // time since flip began
+    int8_t    pitch_dir;        // pitch direction (-1 = pitch forward, 1 = pitch back)
+    float throttle_out;
+    int16_t Differ_Speed=0;
+    uint16_t Thr_Forward_L=0;
+    uint16_t Thr_Backup_L=0;
+    uint16_t Thr_Forward_R=0;
+    uint16_t Thr_Backup_R=0;
+    uint16_t last_value[8];
+    void update_Thr(void);
+    void read_channels(void);
+};
+
+#endif
+
+//686879
+#if MODE_RECOVERY_ENABLED == ENABLED
+class ModeRecovery : public Mode {
+
+public:
+    // inherit constructor
+    using Mode::Mode;
+    Number mode_number() const override { return Number::RECOVERY; }
+
+    bool init(bool ignore_checks) override;
+    void run() override;
+
+    bool requires_GPS() const override { return false; }
+    bool has_manual_throttle() const override { return false; }
+    bool allows_arming(AP_Arming::Method method) const override { return false; };
+    bool is_autopilot() const override { return false; }
+
+protected:
+
+    const char *name() const override { return "RECOVERY"; }
+    const char *name4() const override { return "RECOVERY"; }
+
+private:
+
+
+
+    enum class RecoveryState : uint8_t {
+        Start,
+        MY_mid,//* MYP.S. 翻转中间状态：油门全开，000自稳
+        Recovery,
+        Abandon
+    };
+    RecoveryState _state;               // current state of flip
+    Mode::Number   desired_control_mode;   // flight mode when flip was initated
+    uint32_t  start_time_ms;          // time since flip began
+    int8_t    pitch_dir;        // pitch direction (-1 = pitch forward, 1 = pitch back)
+    float throttle_out;
+
+    int MY_i=0;//*MYP.S.循环打印
+    int MY_TIMER=0;//*MYP.S. PID稳定时间计时器
+};
+#endif
+
+#if MODE_TOP_ENABLED == ENABLED
+class ModeTop : public Mode {
+
+public:
+    // inherit constructor
+    using Mode::Mode;
+    Number mode_number() const override { return Number::TOP; }
+
+    bool init(bool ignore_checks) override;
+    void run() override;
+
+    bool requires_GPS() const override { return false; }
+    bool has_manual_throttle() const override { return false; }
+    bool allows_arming(AP_Arming::Method method) const override { return false; };
+    bool is_autopilot() const override { return false; }
+    void output_to_motors() override;
+
+protected:
+
+    const char *name() const override { return "TOP"; }
+    const char *name4() const override { return "TOP"; }
+
+private:
+    Vector3f orig_attitude;         // original vehicle attitude before flip
+
+    enum class TopState : uint8_t {
+        Start,
+        Top,
+        Abandon
+    };
+    TopState _state;               // current state of flip
+    Mode::Number   orig_control_mode;   // flight mode when flip was initated
+    uint32_t  start_time_ms;          // time since flip began
+    int8_t    pitch_dir;        // pitch direction (-1 = pitch forward, 1 = pitch back)
+    float throttle_out;
+    int16_t Differ_Speed=0;
+    uint16_t Thr_Forward_L=0;
+    uint16_t Thr_Backup_L=0;
+    uint16_t Thr_Forward_R=0;
+    uint16_t Thr_Backup_R=0;
+    uint16_t last_value[8];
+    void update_Thr(void);
+    void read_channels(void);
+};
+
+#endif
+//*MYP.S. 一键起飞模式类定义
+#if MODE_AUTO_TAKEOFF_ENABLED == ENABLED
+class ModeAuto_takeoff : public Mode {
+
+public:
+    // inherit constructor
+    using Mode::Mode;
+    Number mode_number() const override { return Number::AUTO_TAKEOFF; }
+
+    bool init(bool ignore_checks) override;
+    void run() override;
+
+    bool requires_GPS() const override { return false; }
+    bool has_manual_throttle() const override { return false; }
+    bool allows_arming(AP_Arming::Method method) const override { return true; };
+    bool is_autopilot() const override { return false; }
+    bool has_user_takeoff(bool must_navigate) const override {
+        return !must_navigate;
+    }
+    bool allows_autotune() const override { return true; }
+    bool allows_flip() const override { return true; }
+
+protected:
+
+    const char *name() const override { return "AUTO_TAKEOFF"; }
+    const char *name4() const override { return "AUTO_TAKEOFF"; }
+
+private:
+
+};
+#endif
 
 #if MODE_FLOWHOLD_ENABLED == ENABLED
 /*

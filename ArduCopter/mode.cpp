@@ -185,6 +185,30 @@ Mode *Copter::mode_from_mode_num(const Mode::Number mode)
             break;
 #endif
 
+//686879
+#if MODE_CLIMB_ENABLED == ENABLED
+        case Mode::Number::CLIMB:
+            ret = &mode_climb;
+            break;
+#endif
+//!MYP.S. 4.5.5删除MODE_FIRE
+// #if MODE_FIRE_ENABLED == ENABLED
+//         case Mode::Number::FIRE:
+//             ret = &mode_fire;
+//             break;
+// #endif
+#if MODE_RECOVERY_ENABLED == ENABLED
+        case Mode::Number::RECOVERY:
+            ret = &mode_recovery;
+            break;
+#endif
+//*MYP.S. 一键起飞模式
+#if MODE_AUTO_TAKEOFF_ENABLED == ENABLED
+        case Mode::Number::AUTO_TAKEOFF:
+            ret = &mode_auto_takeoff;
+            break;
+#endif
+
 #if MODE_SWARM_ENABLED == ENABLED
         case Mode::Number::SWARM:
             ret = &mode_swarm;

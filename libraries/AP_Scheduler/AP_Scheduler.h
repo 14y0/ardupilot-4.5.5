@@ -108,6 +108,9 @@ public:
     // that function does
     void loop();
 
+    //*MYP.S. MY_LOOP
+    float MY_LOOP();
+
     // call to update any logging the scheduler might do; call at 1Hz
     void update_logging();
 
@@ -174,6 +177,10 @@ public:
         return _last_loop_time_s;
     }
 
+    //*MYP.S. 获取最后一个循环花费的时间（以秒为单位）
+    float MY_get_last_loop_time_s(void) const {
+        return _last_loop_time_s;
+    }
     // get the amount of extra time being added on each loop
     uint32_t get_extra_loop_us(void) const {
         return extra_loop_us;
@@ -241,6 +248,8 @@ private:
     // start of loop timing
     uint32_t _loop_timer_start_us;
 
+    //*MYP.S. 时间间隔计算函数->上次时间储存变量
+    uint32_t MY_loop_timer_start_us=0;
     // time of last loop in seconds
     float _last_loop_time_s;
     
