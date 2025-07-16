@@ -33,15 +33,16 @@ void ModeAuto_takeoff::run()
     float front_distance=copter.x1_value-copter.x2_value;//*前向距离差
     float MY_dt=copter.scheduler.MY_LOOP();
     //*MYP.S. 初始化pid对象     参数：p:0.005 |i:0 |d:0.0001 |最大速度:0.3 |最大变化值:0.5
-    static MY_PIDController pid(0.005, 0, 0.0001, 0.3, 0.5); 
+    static MY_PIDController pid_height(0.005, 0, 0.0001, 0.3, 0.5); 
+    static MY_PIDController pid_yaw(0.005, 0, 0.0001, 0.3, 0.5);
     float target_height;
-    target_height = 150.0f; //*MYP.S. 定高目标高度（cm）
+    target_height = 100.0f; //*MYP.S. 定高目标高度（cm）
     current_height = copter.z_value; //*MYP.S. 当前高度（cm）
-    int yaw_dt=MY_dt;
+    float yaw_dt = MY_dt;
     //*高度PID
-    pid_output = pid.compute(target_height, current_height, yaw_dt);
+    pid_output = pid_height.compute(target_height, current_height, yaw_dt);
     //*角度PID
-    pid_output_yaw=pid.compute(yaw_target,front_distance,yaw_dt);
+    pid_output_yaw = pid_yaw.compute(yaw_target, front_distance, yaw_dt);
     //*MYP.S. 转换为cm/s
     pid_output=pid_output*100;
     //*MYP.S. 转换为cm/s
@@ -58,7 +59,10 @@ void ModeAuto_takeoff::run()
 
     //*pid接管yaw角控制，yaw角输入被注释掉
     // get pilot's desired yaw rate
-    //float target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->norm_input_dz());
+    float target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->norm_input_dz());
+    if(abs(target_yaw_rate) < 50){
+        target_yaw_rate = pid_output_yaw;
+    }
 
     // get pilot desired climb rate
     float target_climb_rate = pid_output;
@@ -118,7 +122,7 @@ void ModeAuto_takeoff::run()
 
     // call attitude controller
     //!注意测试yaw角加速度方向
-    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, pid_output_yaw);
+    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate);
 
     // run the vertical position controller and set output throttle
     pos_control->update_z_controller();

@@ -23,13 +23,12 @@ void Copter::init_rangefinder(void)
 }
 
 //*MYP.S. 激光雷达滤波函数
-float get_x1_weighted_average() {
+float Copter::get_x1_weighted_average() {
     const float weights[10] = {0.30, 0.22, 0.16, 0.12, 0.10, 0.04, 0.02, 0.02, 0.01, 0.01};
     float sum = 0;
     float weight_sum = 0;
     int count = x1_history_full ? 10 : x1_index;
     for (int i = 0; i < count; i++) {
-        // idx指向最新的、次新的...最老的数据
         int idx = (x1_index - i + 10) % 10;
         sum += x1_history[idx] * weights[i];
         weight_sum += weights[i];
@@ -40,15 +39,13 @@ float get_x1_weighted_average() {
         return 0;
     }
 }
-
 //*MYP.S. 激光雷达滤波函数
-float get_x2_weighted_average() {
+float Copter::get_x2_weighted_average() {
     const float weights[10] = {0.30, 0.22, 0.16, 0.12, 0.10, 0.04, 0.02, 0.02, 0.01, 0.01};
     float sum = 0;
     float weight_sum = 0;
     int count = x2_history_full ? 10 : x2_index;
     for (int i = 0; i < count; i++) {
-        // idx指向最新的、次新的...最老的数据
         int idx = (x2_index - i + 10) % 10;
         sum += x2_history[idx] * weights[i];
         weight_sum += weights[i];
@@ -97,7 +94,7 @@ void Copter::read_rangefinder(void)
         //*MYP.S.新的x1_value计算出来后
         x1_history[x1_index] = x1_value;
         x1_index = (x1_index + 1) % 10;
-        if (x1_index >= 9) x1_history_full = true;
+        if (x1_index == 0) x1_history_full = true; 
         x1_filtered = get_x1_weighted_average();
         //*MYP.S.新的x2_value计算出来后
         x2_history[x2_index] = x2_value;

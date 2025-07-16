@@ -166,32 +166,30 @@ void ModeTop::update_Thr(void)
 			Differ_Speed = -Threshold;
 		}
 		//left
-        Thr_Fix = Thr_Channel+Differ_Speed;
-        if ((Thr_Fix-Thr_Mid)>0)
-        {
-            if ((Thr_Fix-Thr_Mid)>500)
-            {
-                Thr_Fix = 500+Thr_Mid;
-            }
-            Thr_Forward_L = (Thr_Fix-Thr_Mid)*Up_Rate;//保证在0——10000之间 ，前轮
-            Thr_Backup_L = 0; 
-        }
-        else
-        {
-            if ((Thr_Fix-Thr_Mid)<-500)
-            {
-                Thr_Fix = Thr_Mid-500;
-            }
-            Thr_Backup_L = (Thr_Fix-Thr_Mid)*-Up_Rate;
-            Thr_Forward_L = 0;
-        }
+		Thr_Fix = Thr_Channel+Differ_Speed;
+		if ((Thr_Fix-Thr_Mid)>0)
+		{
+			if ((Thr_Fix-Thr_Mid)>500)
+			{
+				Thr_Fix = 500+Thr_Mid;
+			}
+			Thr_Forward_L = (Thr_Fix-Thr_Mid)*Up_Rate;//保证在0——10000之间 ，前轮
+			Thr_Backup_L = 0; 
+		}
+		else
+		{
+			if ((Thr_Fix-Thr_Mid)<-500)
+			{
+				Thr_Fix = Thr_Mid-500;
+			}
+			Thr_Backup_L = (Thr_Fix-Thr_Mid)*-Up_Rate;
+			Thr_Forward_L = 0;
+		}
 		//right
 		Thr_Fix = Thr_Channel-Differ_Speed;
 		if ((Thr_Fix-Thr_Mid)>0)
 		{
-			if ((Thr_Fix-Th	}
-			Thr_Backup_L = (Thr_Fix-Thr_Mid)*-Up_Rate;
-			Thr_Forward_L =r_Mid)>1500)
+			if ((Thr_Fix-Thr_Mid)>1500)
 			{
 				Thr_Fix = 1500+Thr_Mid;
 			}

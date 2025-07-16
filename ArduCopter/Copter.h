@@ -258,6 +258,7 @@ private:
     float x2_value=0;
     float x1_filtered =0;//*MYP.S. 激光雷达滤波后的x1_value
     float x2_filtered =0;//*MYP.S. 激光雷达滤波后的x2_value
+    
 
     //*MYP.S. 激光雷达测距历史数据
     float x1_history[10] = {0};   // 保存最近10个x1_value
@@ -266,6 +267,10 @@ private:
     float x2_history[10] = {0};   // 保存最近10个x2_value
     int x2_index = 0;             // 当前插入位置
     bool x2_history_full = false; // 是否已经填满10个数据
+
+    //*MYP.S. 激光雷达滤波
+    float get_x1_weighted_average();
+    float get_x2_weighted_average();
 
     //Swarm相关变量-----------------------------------------------------//
     AP_HAL::UARTDriver *swarm_uart;
@@ -379,9 +384,6 @@ private:
     AP_ExternalControl_Copter external_control;
 #endif
 
-    //*MYP.S. 激光雷达滤波
-    float get_x1_weighted_average();
-    float get_x2_weighted_average();
 
     // system time in milliseconds of last recorded yaw reset from ekf
     uint32_t ekfYawReset_ms;
