@@ -99,15 +99,24 @@ void ModeClimb::run()
     // state machine
     switch (_state) {
 
+    //* MYP.S. 修改了climb模式的逻辑，75°（待定）以上全油，75°以下固定油门
     case ClimbState::Start:
         if(flip_angle <= 7500){
             // under 45 degrees request 400deg/sec roll or pitch
-            attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, CLIMB_ROTATION_RATE * pitch_dir, 0.0f);
-            // increase throttle
-            throttle_out = 1.0f;
+            // attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, CLIMB_ROTATION_RATE * pitch_dir, 0.0f);
+            motors->rc_write(0,2000);
+            motors->rc_write(1,1200);
+            motors->rc_write(2,2000);
+            motors->rc_write(3,1200);
+            // 立即输出到电调
+            motors->output();
         }else {
-            attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, 0.0f, 0.0f);
-            throttle_out = 1.0f;
+            motors->rc_write(0,2000);
+            motors->rc_write(1,2000);
+            motors->rc_write(2,2000);
+            motors->rc_write(3,2000);
+            // 立即输出到电调
+            motors->output();
         }
         // beyond 80deg lean angle move to next stage
         if (Lock_Channel>1500) {
@@ -117,11 +126,13 @@ void ModeClimb::run()
 
 
     case ClimbState::Climb:
-        // between 45deg ~ -90deg request 400deg/sec roll
-        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, 0.0f, 0.0f);
+        motors->rc_write(0,2000);
+        motors->rc_write(1,2000);
+        motors->rc_write(2,2000);
+        motors->rc_write(3,2000);
         update_Thr();
-        // decrease throttle
-        throttle_out = 1.0f;
+        // 立即输出到电调
+        motors->output();
 
         break;
 
