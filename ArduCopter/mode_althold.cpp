@@ -1,5 +1,5 @@
 #include "Copter.h"
-
+#include "PIDController.h"
 
 /*
  * Init and run calls for althold, flight mode
@@ -41,7 +41,7 @@ void ModeAltHold::run()
 
     // get pilot desired climb rate 获取期望爬升速度
     float target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());
-    ////爬 升率限幅
+    //爬 升率限幅
     target_climb_rate = constrain_float(target_climb_rate, -get_pilot_speed_dn(), g.pilot_speed_up);
 
     // Alt Hold State Machine Determination

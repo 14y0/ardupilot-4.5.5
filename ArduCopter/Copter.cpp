@@ -642,6 +642,9 @@ void Copter::three_hz_loop()
 // one_hz_loop - runs at 1Hz
 void Copter::one_hz_loop()
 {
+    // //*MYP.S. 发送消息
+    gcs().send_text(MAV_SEVERITY_CRITICAL, 
+        "z: %fcm",z_value);
 #if HAL_LOGGING_ENABLED
     if (should_log(MASK_LOG_ANY)) {
         Log_Write_Data(LogDataID::AP_STATE, ap.value);

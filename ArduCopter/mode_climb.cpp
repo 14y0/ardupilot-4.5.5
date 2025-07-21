@@ -90,22 +90,25 @@ void ModeClimb::run()
 
     // get corrected angle based on direction and axis of rotation
     // we flip the sign of flip_angle to minimize the code repetition
-    // int32_t flip_angle;
+    int32_t flip_angle;
 
     
-    // flip_angle = ahrs.pitch_sensor * pitch_dir;
+    flip_angle = ahrs.pitch_sensor * pitch_dir;
     
 
     // state machine
     switch (_state) {
 
     case ClimbState::Start:
-        // under 45 degrees request 400deg/sec roll or pitch
-        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, CLIMB_ROTATION_RATE * pitch_dir, 0.0f);
-
-        // increase throttle
-        throttle_out = 1.0f;
-
+        if(flip_angle <= 7500){
+            // under 45 degrees request 400deg/sec roll or pitch
+            attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, CLIMB_ROTATION_RATE * pitch_dir, 0.0f);
+            // increase throttle
+            throttle_out = 1.0f;
+        }else {
+            attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, 0.0f, 0.0f);
+            throttle_out = 1.0f;
+        }
         // beyond 80deg lean angle move to next stage
         if (Lock_Channel>1500) {
             _state = ClimbState::Climb;
@@ -115,7 +118,7 @@ void ModeClimb::run()
 
     case ClimbState::Climb:
         // between 45deg ~ -90deg request 400deg/sec roll
-        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, CLIMB_ROTATION_RATE * pitch_dir, 0.0f);
+        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, 0.0f, 0.0f);
         update_Thr();
         // decrease throttle
         throttle_out = 1.0f;
