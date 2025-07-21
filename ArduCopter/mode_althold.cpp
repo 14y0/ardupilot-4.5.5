@@ -25,6 +25,21 @@ bool ModeAltHold::init(bool ignore_checks)
 // should be called at 100hz or more
 void ModeAltHold::run()
 {
+
+    static float yaw_target=0;
+    float front_distance=copter.x1_value-copter.x2_value-1;//*前向距离差
+    float MY_dt=copter.scheduler.MY_LOOP();
+    //*MYP.S. 初始化pid对象     参数：p:0.005 |i:0 |d:0.0001 |最大速度:0.3 |最大变化值:0.15
+    static MY_PIDController pid_yaw(0.01, 0, 0.0001, 0.5, 0.2);
+    //*角度PID
+    copter.pid_output_yaw = pid_yaw.compute(yaw_target, front_distance, MY_dt);
+    //*MYP.S. 转换为cm/s
+    //MYP.S. 非线性转换
+    //MYP.S.设定最大输出max_output（如2000），可调
+    float max_output = 4000.0f;
+    copter.pid_output_yaw = max_output * tanh(copter.pid_output_yaw / max_output);
+    copter.pid_output_yaw=copter.pid_output_yaw*20000;
+
     // set vertical speed and acceleration limits 对z方向的最大加速度进行设置。
     pos_control->set_max_speed_accel_z(-get_pilot_speed_dn(), g.pilot_speed_up, g.pilot_accel_z);
 

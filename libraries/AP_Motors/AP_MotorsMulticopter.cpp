@@ -396,6 +396,7 @@ void AP_MotorsMulticopter::Log_Write()
 }
 #endif
 
+//? MYP.S.油门转PWM，双向电调的油门映射可能要在这里改？
 // convert actuator output (0~1) range to pwm range
 int16_t AP_MotorsMulticopter::output_to_pwm(float actuator)
 {
@@ -412,7 +413,7 @@ int16_t AP_MotorsMulticopter::output_to_pwm(float actuator)
         pwm_output = get_pwm_output_min() + (get_pwm_output_max() - get_pwm_output_min()) * actuator;
     }
 
-    return pwm_output;
+    return pwm_output;//? MYP.S. 可能改为：(get_pwm_output_min() + get_pwm_output_max())/2 + ?;映射
 }
 
 // adds slew rate limiting to actuator output

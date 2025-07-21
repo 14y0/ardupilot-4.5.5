@@ -28,27 +28,27 @@ void ModeAuto_takeoff::run()
 {
     static float current_height=0;
     static float pid_output=0;
-    // static float pid_output_yaw=0;
-    // static float yaw_target=0;
-    // float front_distance=copter.x1_value-copter.x2_value-1;//*前向距离差
+    static float pid_output_yaw=0;
+    static float yaw_target=0;
+    float front_distance=copter.x1_value-copter.x2_value-1;//*前向距离差
     float MY_dt=copter.scheduler.MY_LOOP();
     //*MYP.S. 初始化pid对象     参数：p:0.005 |i:0 |d:0.0001 |最大速度:0.3 |最大变化值:0.15
     static MY_PIDController pid_height(0.005, 0, 0.0001, 0.3, 0.15); 
-    // static MY_PIDController pid_yaw(0.01, 0, 0.0001, 0.5, 0.2);
+    static MY_PIDController pid_yaw(0.01, 0, 0.0001, 0.5, 0.2);
     float target_height;
     target_height = 100.0f; //*MYP.S. 定高目标高度（cm）
     current_height = copter.z_value; //*MYP.S. 当前高度（cm）
     //*高度PID
     pid_output = pid_height.compute(target_height, current_height, MY_dt);
     //*角度PID
-    // pid_output_yaw = pid_yaw.compute(yaw_target, front_distance, MY_dt);
+    pid_output_yaw = pid_yaw.compute(yaw_target, front_distance, MY_dt);
     //*MYP.S. 转换为cm/s
     pid_output=pid_output*100;
     //MYP.S. 非线性转换
     //MYP.S.设定最大输出max_output（如2000），可调
-    // float max_output = 4000.0f;
-    // pid_output_yaw = max_output * tanh(pid_output_yaw / max_output);
-    // pid_output_yaw=pid_output_yaw*20000;
+    float max_output = 4000.0f;
+    pid_output_yaw = max_output * tanh(pid_output_yaw / max_output);
+    pid_output_yaw=pid_output_yaw*20000;
     // set vertical speed and acceleration limits
     pos_control->set_max_speed_accel_z(-get_pilot_speed_dn(), g.pilot_speed_up, g.pilot_accel_z);
 
@@ -66,12 +66,12 @@ void ModeAuto_takeoff::run()
     //     target_yaw_rate = pid_output_yaw;
     // }
     // float target_yaw_rate;
-    // float stick_input = channel_yaw->norm_input_dz(); // -1~1
-    // if (stick_input < 0.05 && stick_input > -0.05 && copter.x1_value < 250 && copter.x2_value < 250) { // 摇杆在中位±5%以内
-    //     target_yaw_rate = pid_output_yaw;
-    // } else {
-    //     target_yaw_rate = get_pilot_desired_yaw_rate(stick_input);
-    // }
+    float stick_input = channel_yaw->norm_input_dz(); // -1~1
+    if (stick_input < 0.05 && stick_input > -0.05 && copter.x1_value < 250 && copter.x2_value < 250) { // 摇杆在中位±5%以内
+        target_yaw_rate = pid_output_yaw;
+    } else {
+        target_yaw_rate = get_pilot_desired_yaw_rate(stick_input);
+    }
 
     // get pilot desired climb rate
     float target_climb_rate = pid_output;
