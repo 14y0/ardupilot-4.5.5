@@ -260,6 +260,7 @@ private:
     float x2_filtered =0;//*MYP.S. 激光雷达滤波后的x2_value
 
     float pid_output_yaw=0;
+    int32_t flip_angle;
 
     
     // //*MYP.S. 激光雷达测距历史数据

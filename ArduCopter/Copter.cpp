@@ -644,9 +644,8 @@ void Copter::one_hz_loop()
 {
     // //*MYP.S. 发送消息
     gcs().send_text(MAV_SEVERITY_CRITICAL, 
-        "x1: %fcm x2: %fcm",x1_value,x2_value);
-    gcs().send_text(MAV_SEVERITY_CRITICAL, 
-        "pid: %f",pid_output_yaw);
+        "angle :%ld",flip_angle);
+
 #if HAL_LOGGING_ENABLED
     if (should_log(MASK_LOG_ANY)) {
         Log_Write_Data(LogDataID::AP_STATE, ap.value);

@@ -90,10 +90,10 @@ void ModeClimb::run()
 
     // get corrected angle based on direction and axis of rotation
     // we flip the sign of flip_angle to minimize the code repetition
-    int32_t flip_angle;
+    // int32_t flip_angle;
 
     
-    flip_angle = ahrs.pitch_sensor * pitch_dir;
+    copter.flip_angle = ahrs.pitch_sensor * pitch_dir;
     
 
     // state machine
@@ -101,7 +101,7 @@ void ModeClimb::run()
 
     //* MYP.S. 修改了climb模式的逻辑，75°（待定）以上全油，75°以下固定油门
     case ClimbState::Start:
-        if(flip_angle <= 7500){
+        if(copter.flip_angle <= 7000){
             // under 45 degrees request 400deg/sec roll or pitch
             // attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, CLIMB_ROTATION_RATE * pitch_dir, 0.0f);
             motors->rc_write(0,2000);
@@ -110,13 +110,19 @@ void ModeClimb::run()
             motors->rc_write(3,1200);
             // 立即输出到电调
             motors->output();
+
+            throttle_out = 1.0f;
         }else {
+
+            // attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, 0.0f, 0.0f);
             motors->rc_write(0,2000);
             motors->rc_write(1,2000);
             motors->rc_write(2,2000);
             motors->rc_write(3,2000);
             // 立即输出到电调
             motors->output();
+
+            throttle_out = 1.0f;
         }
         // beyond 80deg lean angle move to next stage
         if (Lock_Channel>1500) {
@@ -130,9 +136,11 @@ void ModeClimb::run()
         motors->rc_write(1,2000);
         motors->rc_write(2,2000);
         motors->rc_write(3,2000);
+        // attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, 0.0f, 0.0f);
         update_Thr();
         // 立即输出到电调
         motors->output();
+        throttle_out = 1.0f;
 
         break;
 

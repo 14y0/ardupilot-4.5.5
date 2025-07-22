@@ -22,7 +22,7 @@ void Copter::init_rangefinder(void)
 #endif
 }
 
-// //*MYP.S. 激光雷达滤波函数
+//*MYP.S. 激光雷达滤波函数
 float Copter::get_x1_weighted_average() {
     const float weights[10] = {0.30, 0.22, 0.16, 0.12, 0.10, 0.04, 0.02, 0.02, 0.01, 0.01};
     float sum = 0;
@@ -39,7 +39,7 @@ float Copter::get_x1_weighted_average() {
         return 0;
     }
 }
-// //*MYP.S. 激光雷达滤波函数
+//*MYP.S. 激光雷达滤波函数
 float Copter::get_x2_weighted_average() {
     const float weights[10] = {0.30, 0.22, 0.16, 0.12, 0.10, 0.04, 0.02, 0.02, 0.01, 0.01};
     float sum = 0;
