@@ -949,6 +949,7 @@ private:
 
     enum class ClimbState : uint8_t {
         Start,
+        Mid,
         Climb,
         Abandon
     };

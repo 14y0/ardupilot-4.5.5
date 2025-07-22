@@ -101,9 +101,9 @@ void ModeClimb::run()
 
     //* MYP.S. 修改了climb模式的逻辑，75°（待定）以上全油，75°以下固定油门
     case ClimbState::Start:
-        if(copter.flip_angle <= 7000){
-            // under 45 degrees request 400deg/sec roll or pitch
-            // attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, CLIMB_ROTATION_RATE * pitch_dir, 0.0f);
+        if(copter.flip_angle >= 7000){
+            _state = ClimbState::Mid;
+        }else {
             motors->rc_write(0,2000);
             motors->rc_write(1,1200);
             motors->rc_write(2,2000);
@@ -112,24 +112,27 @@ void ModeClimb::run()
             motors->output();
 
             throttle_out = 1.0f;
-        }else {
-
             // attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, 0.0f, 0.0f);
-            motors->rc_write(0,2000);
-            motors->rc_write(1,2000);
-            motors->rc_write(2,2000);
-            motors->rc_write(3,2000);
-            // 立即输出到电调
-            motors->output();
-
-            throttle_out = 1.0f;
         }
         // beyond 80deg lean angle move to next stage
         if (Lock_Channel>1500) {
             _state = ClimbState::Climb;
         }
          break;
+    
+    case ClimbState::Mid:
+        motors->rc_write(0,2000);
+        motors->rc_write(1,2000);
+        motors->rc_write(2,2000);
+        motors->rc_write(3,2000);
+        // 立即输出到电调
+        motors->output();
 
+        throttle_out = 1.0f;
+        if (Lock_Channel>1500) {
+            _state = ClimbState::Climb;
+        }
+         break;
 
     case ClimbState::Climb:
         motors->rc_write(0,2000);
