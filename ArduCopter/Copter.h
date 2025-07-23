@@ -261,6 +261,7 @@ private:
 
     float pid_output_yaw=0;
     int32_t flip_angle;
+    int climb_state_t =0;
 
     
     // //*MYP.S. 激光雷达测距历史数据

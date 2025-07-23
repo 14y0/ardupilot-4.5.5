@@ -101,17 +101,22 @@ void ModeClimb::run()
 
     //* MYP.S. 修改了climb模式的逻辑，75°（待定）以上全油，75°以下固定油门
     case ClimbState::Start:
+        copter.climb_state_t =0;
         if(copter.flip_angle >= 7000){
             _state = ClimbState::Mid;
         }else {
-            motors->rc_write(0,2000);
-            motors->rc_write(1,1200);
-            motors->rc_write(2,2000);
-            motors->rc_write(3,1200);
+            motors->rc_write(0,1400);
+            motors->rc_write(1,1800);
+            motors->rc_write(2,1400);
+            motors->rc_write(3,1800);
+            motors->rc_write(4,0);
+            motors->rc_write(5,0);
+            motors->rc_write(6,0);
+            motors->rc_write(7,0);
             // 立即输出到电调
-            motors->output();
+            // motors->output();
 
-            throttle_out = 1.0f;
+            // throttle_out = 1.0f;
             // attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, 0.0f, 0.0f);
         }
         // beyond 80deg lean angle move to next stage
@@ -121,29 +126,39 @@ void ModeClimb::run()
          break;
     
     case ClimbState::Mid:
+        copter.climb_state_t=1;
         motors->rc_write(0,2000);
         motors->rc_write(1,2000);
         motors->rc_write(2,2000);
         motors->rc_write(3,2000);
+        motors->rc_write(4,0);
+        motors->rc_write(5,0);
+        motors->rc_write(6,0);
+        motors->rc_write(7,0);
         // 立即输出到电调
-        motors->output();
+        // motors->output();
 
-        throttle_out = 1.0f;
+        // throttle_out = 1.0f;
         if (Lock_Channel>1500) {
             _state = ClimbState::Climb;
         }
          break;
 
     case ClimbState::Climb:
+        copter.climb_state_t=2;
         motors->rc_write(0,2000);
         motors->rc_write(1,2000);
         motors->rc_write(2,2000);
         motors->rc_write(3,2000);
+        motors->rc_write(4,0);
+        motors->rc_write(5,0);
+        motors->rc_write(6,0);
+        motors->rc_write(7,0);
         // attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0.0f, 0.0f, 0.0f);
         update_Thr();
         // 立即输出到电调
-        motors->output();
-        throttle_out = 1.0f;
+        // motors->output();
+        // throttle_out = 1.0f;
 
         break;
 
@@ -159,37 +174,38 @@ void ModeClimb::run()
     }
 
     // output pilot's throttle without angle boost
-    attitude_control->set_throttle_out(throttle_out, true, g.throttle_filt);
+    // attitude_control->set_throttle_out(throttle_out, true, g.throttle_filt);
 }
 
 void ModeClimb::output_to_motors()
 {
 
     if (_state == ClimbState::Climb){
-       if (Lock_Channel<1500){
-        motors->rc_write(4,0);
-        motors->rc_write(5,0);
-        motors->rc_write(6,0);
-        motors->rc_write(7,0);
-        motors->rc_write(0,2000);
-        motors->rc_write(1,2000);
-        motors->rc_write(2,2000);
-        motors->rc_write(3,2000);
+            if (Lock_Channel<1500){
+                motors->rc_write(4,0);
+                motors->rc_write(5,0);
+                motors->rc_write(6,0);
+                motors->rc_write(7,0);
+                motors->rc_write(0,2000);
+                motors->rc_write(1,2000);
+                motors->rc_write(2,2000);
+                motors->rc_write(3,2000);
         }
         else{
-            motors->rc_write(6,Thr_Forward_L);
-            motors->rc_write(7,Thr_Backup_L);
-            motors->rc_write(5,Thr_Forward_R);
-            motors->rc_write(4,Thr_Backup_R);
-            motors->rc_write(0,2000);
-            motors->rc_write(1,2000);
-            motors->rc_write(2,2000);
-            motors->rc_write(3,2000);
-        }
+                motors->rc_write(6,Thr_Forward_L);
+                motors->rc_write(7,Thr_Backup_L);
+                motors->rc_write(5,Thr_Forward_R);
+                motors->rc_write(4,Thr_Backup_R);
+                motors->rc_write(0,2000);
+                motors->rc_write(1,2000);
+                motors->rc_write(2,2000);
+                motors->rc_write(3,2000);
+            }
     }
-    else{
-        motors->output();
-    }
+    //* MYP.S. 一坨
+    // else{
+    //         motors->output();
+    // }
 
 }
 
